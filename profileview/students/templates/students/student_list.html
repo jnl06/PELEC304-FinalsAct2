@@ -1,0 +1,148 @@
+{% extends "students/base.html" %}
+
+{% block title %}{% if selected %}{{ selected.full_name }}{% else %}Students{% endif %}{% endblock %}
+
+{% block content %}
+<div class="split">
+
+  {# ---------- LEFT: student list ---------- #}
+  <aside class="panel list-panel">
+    <form method="get" class="search-bar" action="{% url 'students:list' %}">
+      {{ search_form.q }}
+      {{ search_form.status }}
+      <button type="submit" class="btn">Go</button>
+    </form>
+
+    <p class="muted count">{{ total }} student{{ total|pluralize }}</p>
+
+    <ul class="student-list">
+      {% for s in page_obj %}
+        <li>
+          <a class="student-row {% if selected and selected.pk == s.pk %}active{% endif %}"
+             href="{% url 'students:detail' s.pk %}{% if querystring %}?{{ querystring }}{% endif %}">
+            <span class="avatar">{{ s.first_name|slice:":1" }}{{ s.last_name|slice:":1" }}</span>
+            <span class="row-text">
+              <strong>{{ s.last_name }}, {{ s.first_name }}</strong>
+              <small>{{ s.student_number }} · {{ s.course }}</small>
+            </span>
+            <span class="badge badge-{{ s.status }}">{{ s.get_status_display }}</span>
+          </a>
+        </li>
+      {% empty %}
+        <li class="empty">No student found.</li>
+      {% endfor %}
+    </ul>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="pager">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&laquo; Prev</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Next &raquo;</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  </aside>
+
+  {# ---------- RIGHT: student detail ---------- #}
+  <section class="panel detail-panel">
+    {% if selected %}
+      <div class="detail-head">
+        <span class="avatar avatar-lg">{{ selected.first_name|slice:":1" }}{{ selected.last_name|slice:":1" }}</span>
+        <div>
+          <h1>{{ selected.full_name }}</h1>
+          <p class="muted">{{ selected.student_number }} · {{ selected.course }} · Year {{ selected.year_level }}</p>
+          <span class="badge badge-{{ selected.status }}">{{ selected.get_status_display }}</span>
+        </div>
+        <a class="btn" href="{% url 'students:update' selected.pk %}">Edit</a>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="personal" role="tab">Personal Info</button>
+        <button class="tab" data-tab="contact" role="tab">Contact</button>
+        <button class="tab" data-tab="enrollment" role="tab">Enrollment</button>
+        <button class="tab" data-tab="background" role="tab">Background Info</button>
+      </div>
+
+      <div class="tab-pane active" id="tab-personal">
+        <dl class="info-grid">
+          <div><dt>First name</dt><dd>{{ selected.first_name }}</dd></div>
+          <div><dt>Middle name</dt><dd>{{ selected.middle_name|default:"—" }}</dd></div>
+          <div><dt>Last name</dt><dd>{{ selected.last_name }}</dd></div>
+          <div><dt>Suffix</dt><dd>{{ selected.suffix|default:"—" }}</dd></div>
+          <div><dt>Birth date</dt><dd>{{ selected.birth_date|date:"F j, Y" }}</dd></div>
+          <div><dt>Sex</dt><dd>{{ selected.get_sex_display }}</dd></div>
+          <div><dt>Civil status</dt><dd>{{ selected.get_civil_status_display }}</dd></div>
+          <div><dt>Nationality</dt><dd>{{ selected.nationality }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="tab-pane" id="tab-contact">
+        <dl class="info-grid">
+          <div><dt>Email</dt><dd>{{ selected.email }}</dd></div>
+          <div><dt>Phone</dt><dd>{{ selected.phone|default:"—" }}</dd></div>
+          <div><dt>Barangay</dt><dd>{{ selected.barangay|default:"—" }}</dd></div>
+          <div><dt>City</dt><dd>{{ selected.city|default:"—" }}</dd></div>
+          <div><dt>Province</dt><dd>{{ selected.province|default:"—" }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="tab-pane" id="tab-enrollment">
+        <dl class="info-grid">
+          <div><dt>Course</dt><dd>{{ selected.course }}</dd></div>
+          <div><dt>Year level</dt><dd>{{ selected.year_level }}</dd></div>
+          <div><dt>Section</dt><dd>{{ selected.section|default:"—" }}</dd></div>
+          <div><dt>School year</dt><dd>{{ selected.school_year }}</dd></div>
+          <div><dt>Semester</dt><dd>{{ selected.semester|default:"—" }}</dd></div>
+          <div><dt>Status</dt><dd>{{ selected.get_status_display }}</dd></div>
+          <div><dt>Date enrolled</dt><dd>{{ selected.date_enrolled|date:"F j, Y" }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="tab-pane" id="tab-background">
+        {% with bg=selected.background %}
+          {% if bg %}
+            <h3 class="sub">Father</h3>
+            <dl class="info-grid">
+              <div><dt>Name</dt><dd>{{ bg.father_name|default:"—" }}</dd></div>
+              <div><dt>Occupation</dt><dd>{{ bg.father_occupation|default:"—" }}</dd></div>
+            </dl>
+            <h3 class="sub">Mother</h3>
+            <dl class="info-grid">
+              <div><dt>Name</dt><dd>{{ bg.mother_name|default:"—" }}</dd></div>
+              <div><dt>Maiden name</dt><dd>{{ bg.mother_maiden_name|default:"—" }}</dd></div>
+              <div><dt>Occupation</dt><dd>{{ bg.mother_occupation|default:"—" }}</dd></div>
+            </dl>
+          {% else %}
+            <p class="empty">No background info yet. <a href="{% url 'students:update' selected.pk %}">Add it</a>.</p>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+    {% else %}
+      <div class="placeholder">
+        <p>Pick student on left.</p>
+        <p class="muted">Their info show here.</p>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tab switch. Keep it small.
+  document.querySelectorAll(".tab").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".tab, .tab-pane").forEach(function (el) {
+        el.classList.remove("active");
+      });
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+{% endblock %}

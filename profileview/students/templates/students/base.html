@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Students{% endblock %} · Online Enrollment</title>
+  <link rel="stylesheet" href="{% static 'css/students.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'students:list' %}">Admin Student Profile View</a>
+    <a class="btn btn-primary" href="{% url 'students:create' %}">+ Add Student</a>
+  </header>
+
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message message-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
